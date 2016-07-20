@@ -15,7 +15,7 @@ Embed a Metasploit Payload in an Original .Apk File
 ###Requirements 
  
  1. Ruby (**> 1.8.7**).
- 2. Android SDK(*** For injection ***)
+ 2. Android SDK(** For injection **)
  
 ###Warring 
 Don't edit or remove **embed_tools** folder.
