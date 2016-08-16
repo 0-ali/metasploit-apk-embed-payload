@@ -1,5 +1,5 @@
-#!/usr/bin/env ruby
-
+#!/bin/env ruby
+# encoding: utf-8
 require 'nokogiri'
 require 'fileutils'
 require 'optparse'
