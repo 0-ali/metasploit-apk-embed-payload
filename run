@@ -1,2 +1,0 @@
-#!/bin/bash
-sudo ruby apk-embed-payload.rb "$@"
