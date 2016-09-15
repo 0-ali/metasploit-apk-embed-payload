@@ -259,7 +259,7 @@ class EmbedApk
 	 `java -jar #{@toolsDir}signapk/signapk.jar #{@toolsDir}signapk/certificate.pem #{@toolsDir}signapk/key.pk8 #{@injectedApk} #{@workingDIR}/#{getTargetAPK}_embedded.apk`
   # embedding end
 	getTargetAPK = File.basename(@targetAPK)
-	 messagePrint("#{@getTargetAPK} has been embedded,#{getTargetAPK}_embedded.apk","succeed")
+	 messagePrint("#{getTargetAPK} has been embedded,#{getTargetAPK}_embedded.apk","succeed")
 	 `rm -rf #{@tempDir}`
 
  end
