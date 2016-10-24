@@ -216,7 +216,7 @@ class EmbedApk
 	  begin
 	    activitysmali = File.read(smalifile)
      rescue Errno::ENOENT
-	   messagePrint("Unable to find correct hook automatically","error")
+	   messagePrint("Unable to find correct hook automatically","info")
 	  begin
 		results = scrapeFilesForLauncherActivity(@originalDir)
 		smalifile = results[0]
