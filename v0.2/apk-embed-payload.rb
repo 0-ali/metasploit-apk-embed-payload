@@ -29,7 +29,7 @@ msfvenom_opts = ARGV[1,ARGV.length]
 
 EmbedPayload = EmbedApk.new(
 	Dir.pwd + "/",
-    "/tmp/",
+    "/data/data/com.termux/files/home/metasploit-apk-embed-payload/v0.2/tmp/",
 	ARGV[0],
 	"Tools/",
 	opts
